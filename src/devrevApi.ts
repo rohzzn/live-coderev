@@ -1,9 +1,8 @@
-import fetch from 'node-fetch';
+const fetch = require('node-fetch');
 
-const DEVREV_API_BASE = 'https://api.devrev.ai'; // Example base URL
+const DEVREV_API_BASE = 'https://api.devrev.ai';
 const DEVREV_TOKEN = process.env.DEVREV_TOKEN || '';
 
-// Create a DevRev Issue
 export async function createDevRevIssue(title: string, description: string) {
   const response = await fetch(`${DEVREV_API_BASE}/issues`, {
     method: 'POST',
@@ -19,7 +18,6 @@ export async function createDevRevIssue(title: string, description: string) {
   return response.json();
 }
 
-// Update DevRev Issue
 export async function updateDevRevIssue(issueId: string, updates: { status?: string; description?: string }) {
   const response = await fetch(`${DEVREV_API_BASE}/issues/${issueId}`, {
     method: 'PATCH',
