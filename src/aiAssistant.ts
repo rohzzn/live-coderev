@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+const fetch = require('node-fetch');
 
 const AI_API_KEY = process.env.AI_API_KEY || '';
 const AI_API_ENDPOINT = process.env.AI_API_ENDPOINT || '';
