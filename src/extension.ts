@@ -1,26 +1,71 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { createDevRevIssue, updateDevRevIssue } from './devrevApi';
+import { getAiSuggestions } from './aiAssistant';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+  // 1. Command: Create DevRev Issue
+  const createIssueCommand = vscode.commands.registerCommand('live-coderev.createIssue', async () => {
+    const title = await vscode.window.showInputBox({ prompt: 'Enter DevRev Issue Title' });
+    const description = await vscode.window.showInputBox({ prompt: 'Enter Issue Description' });
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "live-coderev" is now active!');
+    if (!title || !description) {
+      vscode.window.showErrorMessage('Title and description are required.');
+      return;
+    }
+    try {
+      const newIssue = await createDevRevIssue(title, description);
+      vscode.window.showInformationMessage(`Created DevRev Issue: ${newIssue.id}`);
+    } catch (err: any) {
+      vscode.window.showErrorMessage(`Error creating issue: ${err.message}`);
+    }
+  });
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('live-coderev.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from live-coderev!');
-	});
+  // 2. Command: Update DevRev Issue
+  const updateIssueCommand = vscode.commands.registerCommand('live-coderev.updateIssue', async () => {
+    const issueId = await vscode.window.showInputBox({ prompt: 'Enter the DevRev Issue ID' });
+    if (!issueId) {
+      vscode.window.showErrorMessage('Issue ID is required.');
+      return;
+    }
 
-	context.subscriptions.push(disposable);
+    const newStatus = await vscode.window.showInputBox({ prompt: 'Enter new status (optional)' });
+    const newDescription = await vscode.window.showInputBox({ prompt: 'Enter new description (optional)' });
+
+    try {
+      const updatedIssue = await updateDevRevIssue(issueId, { status: newStatus, description: newDescription });
+      vscode.window.showInformationMessage(`Updated Issue ${issueId}. New status: ${updatedIssue.status}`);
+    } catch (err: any) {
+      vscode.window.showErrorMessage(`Error updating issue: ${err.message}`);
+    }
+  });
+
+  // 3. Command: Get AI Suggestions
+  const aiSuggestCommand = vscode.commands.registerCommand('live-coderev.aiSuggestions', async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showErrorMessage('No active editor!');
+      return;
+    }
+
+    const selection = editor.selection;
+    if (selection.isEmpty) {
+      vscode.window.showErrorMessage('Select some code to get suggestions.');
+      return;
+    }
+
+    const codeSnippet = editor.document.getText(selection);
+    try {
+      const suggestions = await getAiSuggestions(codeSnippet);
+      vscode.window.showInformationMessage(`AI Suggestions:\n${suggestions}`);
+    } catch (err: any) {
+      vscode.window.showErrorMessage(`AI suggestion error: ${err.message}`);
+    }
+  });
+
+  // Register the commands
+  context.subscriptions.push(createIssueCommand, updateIssueCommand, aiSuggestCommand);
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+  // cleanup if needed
+}
